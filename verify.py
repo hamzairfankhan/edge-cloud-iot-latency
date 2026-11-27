@@ -71,7 +71,7 @@ def verify(data, results):
         np.testing.assert_allclose(parity.loc[parity.network == band, "mean_delta_ms"], gap.mean())
         for row in matrix[matrix.network == band].itertuples():
             assert row.n == mask.sum()
-            timing = benchmark[benchmark.workload == row.workload].sort_values("window_id" if "window_id" in benchmark else "window")
+            timing = benchmark[benchmark.workload == row.workload].sort_values("window")
             cpu = timing.median_ms.to_numpy()[assigned[mask]]
             edge_total = edge_values[mask] + cpu
             cloud_total = cloud_values[mask] + cpu / row.cloud_speed

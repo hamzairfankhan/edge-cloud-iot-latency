@@ -41,7 +41,7 @@
   "cloud_speed": 2.0,
   "input_sha256": {
     "intel_lab.txt.gz": "d99288c8f406ca6604d359ceaa0d8adfffa79e7095061a1e27dc4399f48c7225",
-    "edge.csv": "4a09df7e31f505f5d0176cc5b2f9604271964435158078b0fc496bfcbd961392",
+    "edge.csv": "bfc2792b8d1480c4689208c517d06b507002e707d445e623bea0a2ded4b3ffc1",
     "cloud.csv": "94ce0e33e8796a4c9ccc10dfae7dd80e0834a6139ada18a622b42ab179d3c342"
   },
   "timing_sha256": "4c233ae9f9728e2dc30b7bb6a1385d810f7bb8910693980a31c756d7f6f982de"

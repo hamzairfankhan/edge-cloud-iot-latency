@@ -16,7 +16,7 @@ SOURCES = {
     ),
     "edge.csv": (
         f"{STEVENS_ROOT}/edge.csv",
-        "4a09df7e31f505f5d0176cc5b2f9604271964435158078b0fc496bfcbd961392",
+        "bfc2792b8d1480c4689208c517d06b507002e707d445e623bea0a2ded4b3ffc1",
     ),
     "cloud.csv": (
         f"{STEVENS_ROOT}/cloud.csv",

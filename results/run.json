@@ -1,0 +1,48 @@
+{
+  "sensor": {
+    "raw": 2313682,
+    "outside_bounds": 403299,
+    "duplicate_mote_epoch": 21540,
+    "malformed": 93879,
+    "clean": 1794964,
+    "clean_motes": 52,
+    "eligible_windows": 18102,
+    "sample_rows": 10240,
+    "sample_motes": 40,
+    "sample_windows": 160,
+    "json_bytes_min": 2360,
+    "json_bytes_max": 2739,
+    "json_bytes_median": 2600
+  },
+  "system": "Windows-11-10.0.26300-SP0",
+  "cpu": "Intel64 Family 6 Model 183 Stepping 1, GenuineIntel",
+  "python": "3.12.7",
+  "seed": 20261127,
+  "repeats": 5,
+  "clock": "process_time_ns",
+  "network": {
+    "edge_rows": 8456,
+    "cloud_rows": 8571,
+    "matched": 8456,
+    "invalid_pairs": 0,
+    "usable_pairs": 8456,
+    "unmatched_edge": 0,
+    "unmatched_cloud": 115
+  },
+  "cloud_rtt_cuts_ms": [
+    11.111921666666666,
+    21.507728333333333
+  ],
+  "mean_rtt_cuts_ms": [
+    9.011799166666666,
+    17.077999166666665
+  ],
+  "bootstrap_draws": 2000,
+  "cloud_speed": 2.0,
+  "input_sha256": {
+    "intel_lab.txt.gz": "d99288c8f406ca6604d359ceaa0d8adfffa79e7095061a1e27dc4399f48c7225",
+    "edge.csv": "4a09df7e31f505f5d0176cc5b2f9604271964435158078b0fc496bfcbd961392",
+    "cloud.csv": "94ce0e33e8796a4c9ccc10dfae7dd80e0834a6139ada18a622b42ab179d3c342"
+  },
+  "timing_sha256": "4c233ae9f9728e2dc30b7bb6a1385d810f7bb8910693980a31c756d7f6f982de"
+}

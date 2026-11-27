@@ -1,0 +1,9 @@
+/data/
+/rerun/
+/replay/
+/.venv/
+__pycache__/
+.ipynb_checkpoints/
+*.aux
+*.log
+*.out

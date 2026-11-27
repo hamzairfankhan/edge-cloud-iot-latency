@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Edge or Cloud? · Live experiment</title>
+<style>
+  :root{color-scheme:dark;--ink:#f2f7f6;--muted:#acc1bd;--accent:#72e0c8;--cloud:#ffba87;--line:#2e4647;--surface:#112327;--bg:#081719}
+  *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:1rem/1.5 system-ui,sans-serif}
+  main{max-width:1150px;padding:48px 28px 64px;margin:auto}h1,h2,p{margin:0}h1{font-size:clamp(3rem,9vw,7rem);line-height:.95;letter-spacing:-.08em;margin:18px 0}
+  h2{font-size:1.45rem;letter-spacing:-.035em}p{color:var(--muted)}
+  .eyebrow{color:var(--accent);font-weight:650;letter-spacing:.13em;text-transform:uppercase;font-size:.8rem}
+  .intro{max-width:68ch;font-size:1.1rem;margin-bottom:26px}
+  section{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:24px;margin-top:18px}
+  .controls,.metrics,.manual{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:18px 0}
+  .manual{grid-template-columns:repeat(4,minmax(0,1fr))}
+  label{display:grid;gap:6px;color:var(--muted);font-size:.9rem}
+  select,input{width:100%;font:inherit;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+  .metric{background:var(--bg);border-radius:12px;padding:14px}.metric strong{font-size:clamp(1.1rem,2.4vw,1.85rem);display:block;font-variant-numeric:tabular-nums}
+  .edge{color:var(--accent)}.cloud{color:var(--cloud)}.small{font-size:.86rem}.note{margin-top:12px}
+  .table-scroll{overflow-x:auto}table{width:100%;border-collapse:collapse;margin-top:12px;font-variant-numeric:tabular-nums;text-align:left}
+  th,td{padding:10px;border-bottom:1px solid var(--line)}th{color:var(--muted);font-size:.84rem}.selected{background:#213538}
+  .rule{margin-top:11px;color:var(--ink);font-size:1.06rem}footer{margin-top:20px}
+  @media(max-width:660px){main{padding:28px 14px}section{padding:15px}.controls,.manual{grid-template-columns:repeat(2,minmax(0,1fr))}.metrics{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main>
+  <div class="eyebrow">Edge Computing &amp; Intelligent Systems · Fall 2026</div>
+  <h1>Edge or cloud?</h1>
+  <p class="intro">Explore when faster cloud processing can make up for a longer network round trip. The replay combines published RTT measurements with a local IoT processing benchmark.</p>
+  <section>
+    <h2>Explore the nine scenarios</h2>
+    <div class="controls">
+      <label>Network band<select id="network"><option>Good</option><option>Normal</option><option>Poor</option></select></label>
+      <label>Workload<select id="workload"><option>Light</option><option>Medium</option><option selected>Heavy</option></select></label>
+      <label>Assumed cloud CPU speed<select id="speed"></select></label>
+    </div>
+    <div class="metrics" aria-live="polite">
+      <div class="metric"><p>Lower mean latency</p><strong id="winner"></strong></div>
+      <div class="metric"><p>Cloud − edge, P95</p><strong id="tail"></strong></div>
+      <div class="metric"><p>Paired probes favoring edge</p><strong id="share"></strong></div>
+    </div>
+    <div class="table-scroll">
+      <table aria-label="Scenario decision matrix"><thead><tr><th scope="col">Network</th><th scope="col">Light</th><th scope="col">Medium</th><th scope="col">Heavy</th></tr></thead><tbody id="matrix"></tbody></table>
+    </div>
+    <p class="small note" id="coverage"></p>
+  </section>
+  <section>
+    <h2>Calculate one request live</h2>
+    <p>Start with the selected band’s mean RTTs and the workload’s mean CPU time. Edit any input to see where the outcome changes.</p>
+    <div class="manual">
+      <label>Edge RTT (ms)<input id="e" type="number" min="0" step=".01"></label>
+      <label>Cloud RTT (ms)<input id="c" type="number" min="0" step=".01"></label>
+      <label>Edge CPU (ms)<input id="p" type="number" min="0" step=".01"></label>
+      <label>Cloud speed (×)<input id="s" type="number" min="1" step=".01"></label>
+    </div>
+    <p class="rule" id="formula" aria-live="polite"></p>
+    <p class="small note">Edge wins when the network RTT it saves exceeds its extra CPU time. Request batching time, queueing, transfer time and protocol overhead are outside this model.</p>
+  </section>
+  <footer><p class="small">Source data: Intel Berkeley Lab sensor readings and Stevens Network Lab / RIPE Atlas RTT summaries. This page runs offline and contains only aggregate results.</p></footer>
+</main>
+<script id="results" type="application/json">__STUDY_DATA__</script>
+<script>
+  const data = JSON.parse(document.getElementById('results').textContent);
+  const el = (id) => document.getElementById(id);
+  const [network, workload, speed] = ['network', 'workload', 'speed'].map(el);
+  const bands = ['Good', 'Normal', 'Poor'];
+  const tasks = ['Light', 'Medium', 'Heavy'];
+  const rows = data.sensitivity.filter(row => row.grouping === 'Cloud RTT');
+  const decimal = (value) => Number(value).toFixed(2);
+  const signed = (value) => (value > 0 ? '+' : '') + decimal(value);
+  for (const ratio of [...new Set(rows.map(row => row.cloud_speed))]) {
+    const option = document.createElement('option');
+    option.value = ratio;
+    option.textContent = ratio + '×' + (ratio === data.meta.cloud_speed ? ' (reference)' : '');
+    option.selected = ratio === data.meta.cloud_speed;
+    speed.append(option);
+  }
+  function lookup(band, task) {
+    return rows.find(row => row.cloud_speed === Number(speed.value) && row.network === band && row.workload === task);
+  }
+  function compute() {
+    const [edge, cloud, cpu, ratio] = ['e', 'c', 'p', 's'].map(id => el(id).valueAsNumber);
+    if (![edge, cloud, cpu, ratio].every(Number.isFinite) || Math.min(edge, cloud, cpu) < 0 || ratio < 1) {
+      el('formula').textContent = 'Enter non-negative delays and a cloud speed of at least 1×.';
+      return;
+    }
+    const edgeTime = edge + cpu;
+    const cloudTime = cloud + cpu / ratio;
+    const difference = cloudTime - edgeTime;
+    const outcome = Math.abs(difference) < .005 ? 'Tie' :
+      (difference > 0 ? 'Edge' : 'Cloud') + ' is faster by ' + decimal(Math.abs(difference)) + ' ms';
+    el('formula').textContent = 'Edge ' + decimal(edgeTime) + ' ms · Cloud ' + decimal(cloudTime) + ' ms · ' + outcome;
+  }
+  function render() {
+    const row = lookup(network.value, workload.value);
+    const win = el('winner');
+    win.textContent = row.mean_winner + (row.mean_winner === 'Tie' ? '' : ' by ' + decimal(Math.abs(row.mean_delta_ms)) + ' ms');
+    win.className = row.mean_winner.toLowerCase();
+    el('tail').textContent = signed(row.p95_delta_ms) + ' ms';
+    el('share').textContent = decimal(row.edge_win_pct) + '%';
+    el('coverage').textContent = row.n.toLocaleString() + ' paired probes in the selected band, out of ' +
+      data.meta.network.usable_pairs.toLocaleString() + ' total. Positive cloud − edge values favor edge.';
+    el('matrix').replaceChildren();
+    for (const band of bands) {
+      const tr = document.createElement('tr');
+      const label = document.createElement('th');
+      label.scope = 'row';
+      label.textContent = band;
+      tr.append(label);
+      for (const task of tasks) {
+        const point = lookup(band, task);
+        const td = document.createElement('td');
+        td.textContent = point.mean_winner + ' · ' + decimal(Math.abs(point.mean_delta_ms)) + ' ms';
+        td.className = point.mean_winner.toLowerCase() + (band === network.value && task === workload.value ? ' selected' : '');
+        tr.append(td);
+      }
+      el('matrix').append(tr);
+    }
+    const rtt = data.network.find(n => n.network === network.value);
+    const cell = data.matrix.find(n => n.network === network.value && n.workload === workload.value);
+    el('e').value = rtt.edge_mean_ms.toFixed(4);
+    el('c').value = rtt.cloud_mean_ms.toFixed(4);
+    el('p').value = cell.edge_cpu_mean_ms.toFixed(4);
+    el('s').value = speed.value;
+    compute();
+  }
+  for (const select of [network, workload, speed]) select.addEventListener('change', render);
+  for (const id of ['e', 'c', 'p', 's']) el(id).addEventListener('input', compute);
+  render();
+</script>
+</body>
+</html>
